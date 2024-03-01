@@ -1,2 +1,4 @@
 .idea
+.env
+google_service_account_private_key
 /target
