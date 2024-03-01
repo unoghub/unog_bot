@@ -1,0 +1,45 @@
+[package]
+name = "unog_bot"
+edition = "2021"
+authors = ["Lara Kayaalp <me@lara.lv>"]
+license = "MIT"
+
+[lints.rust]
+absolute-paths-not-starting-with-crate = "warn"
+elided-lifetimes-in-paths = "warn"
+keyword-idents = "warn"
+let-underscore-drop = "warn"
+macro-use-extern-crate = "warn"
+meta-variable-misuse = "warn"
+missing-abi = "warn"
+missing-copy-implementations = "warn"
+missing-debug-implementations = "warn"
+non-ascii-idents = "warn"
+rust-2021-incompatible-or-patterns = "warn"
+rust-2021-prefixes-incompatible-syntax = "warn"
+rust-2021-prelude-collisions = "warn"
+single-use-lifetimes = "warn"
+trivial-casts = "warn"
+trivial-numeric-casts = "warn"
+unit-bindings = "warn"
+unreachable-pub = "warn"
+unsafe-code = "warn"
+unsafe-op-in-unsafe-fn = "warn"
+unused-crate-dependencies = "warn"
+unused-extern-crates = "warn"
+unused-import-braces = "warn"
+unused-lifetimes = "warn"
+unused-macro-rules = "warn"
+unused-qualifications = "warn"
+unused-tuple-struct-fields = "warn"
+
+[lints.clippy]
+cargo = "warn"
+cargo_common_metadata = "allow" # REMOVE ON LIB!!
+multiple_crate_versions = "allow"
+nursery = "warn"
+pedantic = "warn"
+restriction = "warn"
+
+[dependencies]
+
