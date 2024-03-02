@@ -9,13 +9,14 @@ use futures_util::stream::StreamExt;
 use tracing::{error, info, warn};
 use twilight_gateway::{stream::ShardEventStream, Event, Intents, Shard};
 use twilight_model::id::{
-    marker::{ApplicationMarker, GuildMarker},
+    marker::{ApplicationMarker, ChannelMarker, GuildMarker},
     Id,
 };
 
 struct Config {
     guild_id: Id<GuildMarker>,
     token: String,
+    verification_submissions_channel_id: Id<ChannelMarker>,
 }
 
 impl Config {
@@ -24,6 +25,8 @@ impl Config {
         Ok(Self {
             token: env::var("TOKEN")?,
             guild_id: env::var("GUILD_ID")?.parse()?,
+            verification_submissions_channel_id: env::var("VERIFICATION_SUBMISSIONS_CHANNEL_ID")?
+                .parse()?,
         })
     }
 }

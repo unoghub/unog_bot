@@ -9,7 +9,10 @@ use twilight_model::{
 };
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::interaction::{InteractionContext, RunInteraction};
+use crate::{
+    interaction::{InteractionContext, RunInteraction},
+    verification::verification_modal_submit::VerificationModalSubmit,
+};
 
 pub struct ShowVerificationModal {
     ctx: InteractionContext,
@@ -94,7 +97,7 @@ impl RunInteraction for ShowVerificationModal {
         ];
 
         let response = InteractionResponseDataBuilder::new()
-            .custom_id("verification-modal")
+            .custom_id(VerificationModalSubmit::CUSTOM_ID)
             .title("📝 Doğrulanma Formu")
             .components(rows)
             .build();

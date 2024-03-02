@@ -13,6 +13,7 @@ use crate::{
     verification::{
         create_verification_message::CreateVerificationMessage,
         show_verification_modal::ShowVerificationModal,
+        verification_modal_submit::VerificationModalSubmit,
     },
     Context,
 };
@@ -30,6 +31,7 @@ pub trait RunInteraction: Sized {
     async fn run(self) -> Result<()>;
 }
 
+#[derive(Clone)]
 pub struct InteractionContext {
     pub core: Context,
     id: Id<InteractionMarker>,
@@ -81,6 +83,12 @@ impl Context {
             }
             ShowVerificationModal::CUSTOM_ID => {
                 ShowVerificationModal::new(interaction, ctx)
+                    .await?
+                    .run()
+                    .await?;
+            }
+            VerificationModalSubmit::CUSTOM_ID => {
+                VerificationModalSubmit::new(interaction, ctx)
                     .await?
                     .run()
                     .await?;
