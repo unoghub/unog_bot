@@ -22,7 +22,6 @@ single-use-lifetimes = "warn"
 trivial-casts = "warn"
 trivial-numeric-casts = "warn"
 unit-bindings = "warn"
-unreachable-pub = "warn"
 unsafe-code = "warn"
 unsafe-op-in-unsafe-fn = "warn"
 unused-crate-dependencies = "warn"
@@ -43,11 +42,18 @@ blanket-clippy-restriction-lints = "allow"
 cargo-common-metadata = "allow"
 implicit-return = "allow"
 missing-docs-in-private-items = "allow"
+module-name-repetitions = "allow"
 multiple-crate-versions = "allow"
+multiple-inherent-impl = "allow"
+non-ascii-literal = "allow"
 print-stderr = "allow"
 print-stdout = "allow"
 question-mark-used = "allow"
+self-named-module-files = "allow"
 single-call-fn = "allow"
+single-char-lifetime-names = "allow"
+std-instead-of-alloc = "allow"
+wildcard-enum-match-arm = "allow"
 
 [dependencies]
 anyhow = "1.0"
@@ -58,3 +64,5 @@ tracing = { version = "0.1", default-features = false, features = ["std"] }
 tracing-subscriber = "0.3"
 twilight-gateway = { version = "0.15", default-features = false, features = ["simd-json", "rustls-webpki-roots", "twilight-http", "zlib-simd"] }
 twilight-http = { version = "0.15", default-features = false, features = ["decompression", "simd-json", "rustls-webpki-roots", "trust-dns"] }
+twilight-model = "0.15"
+twilight-util = { version = "0.15", features = ["builder"] }
