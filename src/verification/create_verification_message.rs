@@ -6,21 +6,25 @@ use twilight_model::{
     },
     channel::message::{
         component::{ActionRow, Button, ButtonStyle},
-        Component, ReactionType,
+        Component, MessageFlags, ReactionType,
     },
     guild::Permissions,
+    http::interaction::{InteractionResponse, InteractionResponseType},
     id::{marker::ChannelMarker, Id},
 };
-use twilight_util::builder::command::CommandBuilder;
+use twilight_util::builder::{
+    command::CommandBuilder, embed::EmbedBuilder, InteractionResponseDataBuilder,
+};
 
 use crate::{
-    interaction::{CreateCommand, RunInteraction},
+    color::Color,
+    interaction::{CreateCommand, InteractionContext, RunInteraction},
     verification::show_verification_modal::ShowVerificationModal,
-    Context,
 };
 
 pub struct CreateVerificationMessage {
     channel_id: Id<ChannelMarker>,
+    ctx: InteractionContext,
 }
 
 impl CreateCommand for CreateVerificationMessage {
@@ -39,19 +43,20 @@ impl CreateCommand for CreateVerificationMessage {
 impl RunInteraction for CreateVerificationMessage {
     const CUSTOM_ID: &'static str = "doğrulanma_mesajını_at";
 
-    #[allow(clippy::let_underscore_untyped)]
-    async fn new(_: &Context, interaction: Interaction) -> Result<Self> {
+    async fn new(interaction: Interaction, ctx: InteractionContext) -> Result<Self> {
         Ok(Self {
             channel_id: interaction
                 .channel
+                .as_ref()
                 .ok_or_else(|| {
                     anyhow!("create_verification_message interaction doesn't have channel attached")
                 })?
                 .id,
+            ctx,
         })
     }
 
-    async fn run(self, ctx: &Context) -> Result<()> {
+    async fn run(self) -> Result<()> {
         let show_verification_modal_button = Button {
             custom_id: Some(ShowVerificationModal::CUSTOM_ID.to_owned()),
             disabled: false,
@@ -63,11 +68,33 @@ impl RunInteraction for CreateVerificationMessage {
             url: None,
         };
 
-        ctx.client
+        self.ctx
+            .core
+            .client
             .create_message(self.channel_id)
             .components(&[Component::ActionRow(ActionRow {
                 components: vec![Component::Button(show_verification_modal_button)],
             })])?
+            .await?;
+
+        let response_embed = EmbedBuilder::new()
+            .title("📨 Doğrulanma mesajı atıldı")
+            .description(
+                "Kullanıcılar bu mesajdaki butonu kullanarak doğrulanma formunu açabilecek.",
+            )
+            .color(Color::Success.into())
+            .build();
+
+        self.ctx
+            .create_message_response(&InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(
+                    InteractionResponseDataBuilder::new()
+                        .embeds([response_embed])
+                        .flags(MessageFlags::EPHEMERAL)
+                        .build(),
+                ),
+            })
             .await?;
 
         Ok(())

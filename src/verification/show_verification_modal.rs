@@ -1,7 +1,7 @@
 use anyhow::Result;
 use twilight_model::application::interaction::Interaction;
 
-use crate::{interaction::RunInteraction, Context};
+use crate::interaction::{InteractionContext, RunInteraction};
 
 pub struct ShowVerificationModal;
 
@@ -9,12 +9,11 @@ impl RunInteraction for ShowVerificationModal {
     const CUSTOM_ID: &'static str = "show-verification-modal";
 
     #[allow(let_underscore_drop, clippy::let_underscore_untyped)]
-    async fn new(_: &Context, _: Interaction) -> Result<Self> {
+    async fn new(_: Interaction, _: InteractionContext) -> Result<Self> {
         Ok(Self)
     }
 
-    #[allow(clippy::let_underscore_untyped)]
-    async fn run(self, _: &Context) -> Result<()> {
+    async fn run(self) -> Result<()> {
         Ok(())
     }
 }

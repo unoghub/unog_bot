@@ -1,8 +1,12 @@
 use anyhow::{anyhow, bail, Result};
 use twilight_http::client::InteractionClient;
-use twilight_model::application::{
-    command::Command,
-    interaction::{Interaction, InteractionData},
+use twilight_model::{
+    application::{
+        command::Command,
+        interaction::{Interaction, InteractionData},
+    },
+    http::interaction::InteractionResponse,
+    id::{marker::InteractionMarker, Id},
 };
 
 use crate::{verification::create_verification_message::CreateVerificationMessage, Context};
@@ -15,28 +19,39 @@ pub trait CreateCommand {
 pub trait RunInteraction: Sized {
     const CUSTOM_ID: &'static str;
 
-    async fn new(ctx: &Context, interaction: Interaction) -> Result<Self>;
+    async fn new(interaction: Interaction, ctx: InteractionContext) -> Result<Self>;
 
-    async fn run(self, ctx: &Context) -> Result<()>;
+    async fn run(self) -> Result<()>;
+}
+
+pub struct InteractionContext {
+    pub core: Context,
+    id: Id<InteractionMarker>,
+    token: String,
+}
+
+impl InteractionContext {
+    pub fn new(ctx: Context, interaction: &Interaction) -> Self {
+        Self {
+            core: ctx,
+            id: interaction.id,
+            token: interaction.token.clone(),
+        }
+    }
+
+    pub async fn create_message_response(self, response: &InteractionResponse) -> Result<()> {
+        self.core
+            .interaction_client()
+            .create_response(self.id, &self.token, response)
+            .await?;
+        Ok(())
+    }
 }
 
 impl Context {
-    pub const fn interaction_client(&self) -> InteractionClient<'_> {
-        self.client.interaction(self.application_id)
-    }
+    pub async fn handle_interaction(self, interaction: Interaction) -> Result<()> {
+        let ctx = InteractionContext::new(self, &interaction);
 
-    pub async fn set_commands(&self) -> Result<()> {
-        self.interaction_client()
-            .set_guild_commands(
-                self.config.guild_id,
-                &[CreateVerificationMessage::command()?],
-            )
-            .await?;
-
-        Ok(())
-    }
-
-    pub async fn handle_interaction(&self, interaction: Interaction) -> Result<()> {
         let interaction_data = interaction.data.clone().ok_or_else(|| {
             anyhow!(
                 "interaction data is not  `ApplicationCommand`, `MessageComponent`, \
@@ -53,13 +68,28 @@ impl Context {
 
         match custom_id.as_str() {
             CreateVerificationMessage::CUSTOM_ID => {
-                CreateVerificationMessage::new(self, interaction)
+                CreateVerificationMessage::new(interaction, ctx)
                     .await?
-                    .run(self)
+                    .run()
                     .await?;
             }
             _ => bail!("unknown interaction custom id: {custom_id}"),
         }
+
+        Ok(())
+    }
+
+    pub fn interaction_client(&self) -> InteractionClient<'_> {
+        self.client.interaction(self.application_id)
+    }
+
+    pub async fn set_commands(&self) -> Result<()> {
+        self.interaction_client()
+            .set_guild_commands(
+                self.config.guild_id,
+                &[CreateVerificationMessage::command()?],
+            )
+            .await?;
 
         Ok(())
     }

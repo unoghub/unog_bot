@@ -1,7 +1,8 @@
+mod color;
 mod interaction;
 mod verification;
 
-use std::{env, sync::Arc};
+use std::{env, ops::Deref, sync::Arc};
 
 use anyhow::Result;
 use futures_util::stream::StreamExt;
@@ -27,10 +28,26 @@ impl Config {
     }
 }
 
-struct Context {
+struct ContextInner {
     application_id: Id<ApplicationMarker>,
     client: twilight_http::Client,
     config: Config,
+}
+
+struct Context(Arc<ContextInner>);
+
+impl Clone for Context {
+    fn clone(&self) -> Self {
+        Self(Arc::clone(&self.0))
+    }
+}
+
+impl Deref for Context {
+    type Target = Arc<ContextInner>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl Context {
@@ -40,14 +57,14 @@ impl Context {
 
         let application_id = client.current_user_application().await?.model().await?.id;
 
-        Ok(Self {
+        Ok(Self(Arc::new(ContextInner {
             application_id,
             client,
             config,
-        })
+        })))
     }
 
-    async fn shards(&self) -> Result<Vec<Shard>> {
+    async fn shards(self) -> Result<Vec<Shard>> {
         Ok(twilight_gateway::stream::create_recommended(
             &self.client,
             twilight_gateway::Config::new(self.config.token.clone(), Intents::empty()),
@@ -57,7 +74,7 @@ impl Context {
         .collect())
     }
 
-    async fn handle_event(&self, event: Event) {
+    async fn handle_event(self, event: Event) {
         let event_handle_res: Result<()> = match event {
             Event::Ready(_) => {
                 info!("ready set go");
@@ -77,18 +94,18 @@ impl Context {
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
-    let ctx = Arc::new(Context::new().await?);
+    let ctx = Context::new().await?;
     ctx.set_commands().await?;
 
-    let mut shards = ctx.shards().await?;
+    let mut shards = ctx.clone().shards().await?;
     let mut event_stream = ShardEventStream::new(shards.iter_mut());
 
     while let Some((_, event_res)) = event_stream.next().await {
         match event_res {
             Ok(event) => {
-                let ctx_ref = Arc::clone(&ctx);
+                let ctx_clone = ctx.clone();
                 tokio::spawn(async move {
-                    ctx_ref.handle_event(event).await;
+                    ctx_clone.handle_event(event).await;
                 })
             }
             Err(err) => {
