@@ -86,7 +86,7 @@ impl RunInteraction for CreateVerificationMessage {
             .build();
 
         self.ctx
-            .create_message_response(&InteractionResponse {
+            .create_response(&InteractionResponse {
                 kind: InteractionResponseType::ChannelMessageWithSource,
                 data: Some(
                     InteractionResponseDataBuilder::new()

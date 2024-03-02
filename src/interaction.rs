@@ -9,7 +9,13 @@ use twilight_model::{
     id::{marker::InteractionMarker, Id},
 };
 
-use crate::{verification::create_verification_message::CreateVerificationMessage, Context};
+use crate::{
+    verification::{
+        create_verification_message::CreateVerificationMessage,
+        show_verification_modal::ShowVerificationModal,
+    },
+    Context,
+};
 
 pub trait CreateCommand {
     fn command() -> Result<Command>;
@@ -39,7 +45,7 @@ impl InteractionContext {
         }
     }
 
-    pub async fn create_message_response(self, response: &InteractionResponse) -> Result<()> {
+    pub async fn create_response(self, response: &InteractionResponse) -> Result<()> {
         self.core
             .interaction_client()
             .create_response(self.id, &self.token, response)
@@ -69,6 +75,12 @@ impl Context {
         match custom_id.as_str() {
             CreateVerificationMessage::CUSTOM_ID => {
                 CreateVerificationMessage::new(interaction, ctx)
+                    .await?
+                    .run()
+                    .await?;
+            }
+            ShowVerificationModal::CUSTOM_ID => {
+                ShowVerificationModal::new(interaction, ctx)
                     .await?
                     .run()
                     .await?;
