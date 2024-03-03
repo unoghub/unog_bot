@@ -39,12 +39,12 @@ TODO
 Bu bilgileri [Lara](https://lara.lv)'ya sorun:
 
 - `LOGGING_WEBHOOK_URL`: Bot'un error'ları vs. için kullanılacak webhook'un linki
-- `SPREADSHEET_ID`: Doğrulanma bilgilerinin kaydedileceği Google Sheet'in ID'si
+- `SHEET_ID`: Doğrulanma bilgilerinin kaydedileceği Google Sheet'in ID'si
 - `GOOGLE_SERVICE_ACCOUNT_EMAIL`: Google Sheets için kullanılacak olan servis hesabının e-postası
 
 ### Dosyalar
 
-- `google_service_account_private_key`: Google Sheets için kullanılacak olan servis hesabının gizli anahtarı
+- `service_account_key.json`: Google Sheets için kullanılacak olan servis hesabının anahtarı
 
 ### Bot'u Davet Etme
 

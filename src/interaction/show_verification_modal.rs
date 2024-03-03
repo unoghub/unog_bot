@@ -9,9 +9,8 @@ use twilight_model::{
 };
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::{
-    interaction::{InteractionContext, RunInteraction},
-    verification::verification_modal_submit::VerificationModalSubmit,
+use crate::interaction::{
+    verification_modal_submit::VerificationModalSubmit, InteractionContext, RunInteraction,
 };
 
 pub struct ShowVerificationModal {
@@ -68,7 +67,7 @@ impl RunInteraction for ShowVerificationModal {
             value: None,
         });
         let organization_input = Component::TextInput(TextInput {
-            custom_id: "organisation".to_owned(),
+            custom_id: "organization".to_owned(),
             label: "BULUNDUĞUNUZ KURUM VEYA EKİP".to_owned(),
             max_length: Some(100),
             min_length: None,

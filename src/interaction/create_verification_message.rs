@@ -18,8 +18,10 @@ use twilight_util::builder::{
 
 use crate::{
     color::Color,
-    interaction::{CreateCommand, InteractionContext, RunInteraction},
-    verification::show_verification_modal::ShowVerificationModal,
+    interaction::{
+        show_verification_modal::ShowVerificationModal, CreateCommand, InteractionContext,
+        RunInteraction,
+    },
 };
 
 pub struct CreateVerificationMessage {

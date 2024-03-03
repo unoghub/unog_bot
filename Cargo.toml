@@ -62,6 +62,7 @@ wildcard-enum-match-arm = "allow"
 anyhow = "1.0"
 dotenvy = "0.15"
 futures-util = { version = "0.3", default-features = false }
+google-sheets4 = "5.0"
 tokio = { version = "1.36", features = ["rt-multi-thread", "macros"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 tracing-subscriber = "0.3"

@@ -1,6 +1,7 @@
 mod color;
 mod interaction;
-mod verification;
+mod model;
+mod sheets;
 
 use std::{env, ops::Deref, sync::Arc};
 
@@ -13,10 +14,13 @@ use twilight_model::id::{
     Id,
 };
 
+use crate::sheets::Sheets;
+
 struct Config {
     guild_id: Id<GuildMarker>,
     token: String,
     verification_submissions_channel_id: Id<ChannelMarker>,
+    sheet_id: String,
 }
 
 impl Config {
@@ -27,6 +31,7 @@ impl Config {
             guild_id: env::var("GUILD_ID")?.parse()?,
             verification_submissions_channel_id: env::var("VERIFICATION_SUBMISSIONS_CHANNEL_ID")?
                 .parse()?,
+            sheet_id: env::var("SHEET_ID")?,
         })
     }
 }
@@ -35,15 +40,11 @@ struct ContextInner {
     application_id: Id<ApplicationMarker>,
     client: twilight_http::Client,
     config: Config,
+    sheets: Sheets,
 }
 
+#[derive(Clone)]
 struct Context(Arc<ContextInner>);
-
-impl Clone for Context {
-    fn clone(&self) -> Self {
-        Self(Arc::clone(&self.0))
-    }
-}
 
 impl Deref for Context {
     type Target = Arc<ContextInner>;
@@ -57,6 +58,7 @@ impl Context {
     async fn new() -> Result<Self> {
         let config = Config::new()?;
         let client = twilight_http::Client::new(config.token.clone());
+        let sheets = Sheets::new(config.sheet_id.clone()).await?;
 
         let application_id = client.current_user_application().await?.model().await?.id;
 
@@ -64,6 +66,7 @@ impl Context {
             application_id,
             client,
             config,
+            sheets,
         })))
     }
 

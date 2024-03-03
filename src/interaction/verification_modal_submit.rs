@@ -1,14 +1,14 @@
 use anyhow::{anyhow, bail, Result};
+use tracing::warn;
 use twilight_model::{
     application::interaction::{
         modal::ModalInteractionDataActionRow, Interaction, InteractionData,
     },
     channel::message::{
         component::{ActionRow, Button, ButtonStyle},
-        Component, ReactionType,
+        Component, MessageFlags, ReactionType,
     },
     http::interaction::{InteractionResponse, InteractionResponseType},
-    id::{marker::UserMarker, Id},
 };
 use twilight_util::builder::{
     embed::{EmbedBuilder, EmbedFieldBuilder},
@@ -18,17 +18,13 @@ use twilight_util::builder::{
 use crate::{
     color::Color,
     interaction::{InteractionContext, RunInteraction},
+    model::verification::VerificationSubmission,
 };
 
 #[derive(Clone)]
 pub struct VerificationModalSubmit {
-    user_id: Id<UserMarker>,
-    birthday: String,
     ctx: InteractionContext,
-    email: String,
-    experience: String,
-    name_surname: String,
-    organisation: String,
+    submission: VerificationSubmission,
 }
 
 impl VerificationModalSubmit {
@@ -41,7 +37,10 @@ impl VerificationModalSubmit {
             .find_map(|row| {
                 row.components
                     .first()
-                    .and_then(|component| component.value.clone())
+                    .and_then(|component| {
+                        (component.custom_id == custom_id).then_some(component.value.clone())
+                    })
+                    .flatten()
             })
             .ok_or_else(|| anyhow!("couldn't find {custom_id} in verification modal"))
     }
@@ -51,13 +50,28 @@ impl VerificationModalSubmit {
             .title("❔ Doğrulanma formu dolduruldu")
             .field(EmbedFieldBuilder::new(
                 "Kullanıcı",
-                format!("<@{}>", self.user_id),
+                format!("<@{}>", self.submission.user_id),
             ))
-            .field(EmbedFieldBuilder::new("İsim Soyisim", self.name_surname))
-            .field(EmbedFieldBuilder::new("E-Posta Adresi", self.email))
-            .field(EmbedFieldBuilder::new("Doğum Tarihi", self.birthday))
-            .field(EmbedFieldBuilder::new("Deneyim Yılı", self.experience))
-            .field(EmbedFieldBuilder::new("Kurum veya Ekip", self.organisation))
+            .field(EmbedFieldBuilder::new(
+                "İsim Soyisim",
+                self.submission.name_surname,
+            ))
+            .field(EmbedFieldBuilder::new(
+                "E-Posta Adresi",
+                self.submission.email,
+            ))
+            .field(EmbedFieldBuilder::new(
+                "Doğum Tarihi",
+                self.submission.birthday,
+            ))
+            .field(EmbedFieldBuilder::new(
+                "Yıllık Oyun Sektörü Tecrübesi",
+                self.submission.experience,
+            ))
+            .field(EmbedFieldBuilder::new(
+                "Kurum veya Ekip",
+                self.submission.organization,
+            ))
             .color(Color::Pending.into())
             .build();
 
@@ -85,6 +99,16 @@ impl VerificationModalSubmit {
         Ok(())
     }
 
+    async fn append_to_sheet(self) -> Result<()> {
+        self.ctx
+            .core
+            .sheets
+            .append_verification_submission(self.submission)
+            .await?;
+
+        Ok(())
+    }
+
     async fn respond(self) -> Result<()> {
         let response_embed = EmbedBuilder::new()
             .title("📨 Doğrulanma formunuz iletildi")
@@ -100,6 +124,7 @@ impl VerificationModalSubmit {
                 data: Some(
                     InteractionResponseDataBuilder::new()
                         .embeds([response_embed])
+                        .flags(MessageFlags::EPHEMERAL)
                         .build(),
                 ),
             })
@@ -126,20 +151,30 @@ impl RunInteraction for VerificationModalSubmit {
         let components = modal.components;
 
         Ok(Self {
-            user_id,
-            birthday: Self::find_component_value(&components, "birthday")?,
+            submission: VerificationSubmission {
+                birthday: Self::find_component_value(&components, "birthday")?,
+                email: Self::find_component_value(&components, "email")?,
+                experience: Self::find_component_value(&components, "experience")?,
+                name_surname: Self::find_component_value(&components, "name-surname")?,
+                organization: Self::find_component_value(&components, "organization")?,
+                user_id,
+            },
             ctx,
-            email: Self::find_component_value(&components, "email")?,
-            experience: Self::find_component_value(&components, "experience")?,
-            name_surname: Self::find_component_value(&components, "name-surname")?,
-            organisation: Self::find_component_value(&components, "organisation")?,
         })
     }
 
     async fn run(self) -> Result<()> {
+        if let Err(err) = self.clone().append_to_sheet().await {
+            warn!(
+                ?err,
+                "couldn't append verification submission to sheet: {:#?}", self.submission
+            );
+        }
+
         self.clone()
             .create_verification_submission_message()
             .await?;
+
         self.respond().await?;
 
         Ok(())

@@ -1,3 +1,7 @@
+pub mod create_verification_message;
+pub mod show_verification_modal;
+pub mod verification_modal_submit;
+
 use anyhow::{anyhow, bail, Result};
 use twilight_http::client::InteractionClient;
 use twilight_model::{
@@ -10,7 +14,7 @@ use twilight_model::{
 };
 
 use crate::{
-    verification::{
+    interaction::{
         create_verification_message::CreateVerificationMessage,
         show_verification_modal::ShowVerificationModal,
         verification_modal_submit::VerificationModalSubmit,
