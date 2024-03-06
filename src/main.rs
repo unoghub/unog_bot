@@ -1,3 +1,5 @@
+// TODO: change .ok_or_else to anyhow's .context
+
 mod color;
 mod interaction;
 mod model;
@@ -10,7 +12,7 @@ use futures_util::stream::StreamExt;
 use tracing::{error, info, warn};
 use twilight_gateway::{stream::ShardEventStream, Event, Intents, Shard};
 use twilight_model::id::{
-    marker::{ApplicationMarker, ChannelMarker, GuildMarker},
+    marker::{ApplicationMarker, ChannelMarker, GuildMarker, RoleMarker},
     Id,
 };
 
@@ -18,20 +20,22 @@ use crate::sheets::Sheets;
 
 struct Config {
     guild_id: Id<GuildMarker>,
+    sheet_id: String,
     token: String,
     verification_submissions_channel_id: Id<ChannelMarker>,
-    sheet_id: String,
+    verified_role_id: Id<RoleMarker>,
 }
 
 impl Config {
     fn new() -> Result<Self> {
         dotenvy::dotenv()?;
         Ok(Self {
-            token: env::var("TOKEN")?,
             guild_id: env::var("GUILD_ID")?.parse()?,
+            sheet_id: env::var("SHEET_ID")?,
+            token: env::var("TOKEN")?,
             verification_submissions_channel_id: env::var("VERIFICATION_SUBMISSIONS_CHANNEL_ID")?
                 .parse()?,
-            sheet_id: env::var("SHEET_ID")?,
+            verified_role_id: env::var("VERIFIED_ROLE_ID")?.parse()?,
         })
     }
 }

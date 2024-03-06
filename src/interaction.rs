@@ -1,3 +1,4 @@
+mod approve_verification;
 pub mod create_verification_message;
 pub mod show_verification_modal;
 pub mod verification_modal_submit;
@@ -15,6 +16,7 @@ use twilight_model::{
 
 use crate::{
     interaction::{
+        approve_verification::ApproveVerification,
         create_verification_message::CreateVerificationMessage,
         show_verification_modal::ShowVerificationModal,
         verification_modal_submit::VerificationModalSubmit,
@@ -79,6 +81,12 @@ impl Context {
         };
 
         match custom_id.as_str() {
+            ApproveVerification::CUSTOM_ID => {
+                ApproveVerification::new(interaction, ctx)
+                    .await?
+                    .run()
+                    .await?;
+            }
             CreateVerificationMessage::CUSTOM_ID => {
                 CreateVerificationMessage::new(interaction, ctx)
                     .await?

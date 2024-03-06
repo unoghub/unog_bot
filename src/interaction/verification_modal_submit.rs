@@ -1,3 +1,5 @@
+use std::vec::IntoIter;
+
 use anyhow::{anyhow, bail, Result};
 use tracing::warn;
 use twilight_model::{
@@ -17,7 +19,7 @@ use twilight_util::builder::{
 
 use crate::{
     color::Color,
-    interaction::{InteractionContext, RunInteraction},
+    interaction::{approve_verification::ApproveVerification, InteractionContext, RunInteraction},
     model::verification::VerificationSubmission,
 };
 
@@ -28,21 +30,14 @@ pub struct VerificationModalSubmit {
 }
 
 impl VerificationModalSubmit {
-    fn find_component_value(
-        components: &[ModalInteractionDataActionRow],
-        custom_id: &str,
+    fn next_component_value(
+        components: &mut IntoIter<ModalInteractionDataActionRow>,
     ) -> Result<String> {
         components
-            .iter()
-            .find_map(|row| {
-                row.components
-                    .first()
-                    .and_then(|component| {
-                        (component.custom_id == custom_id).then_some(component.value.clone())
-                    })
-                    .flatten()
-            })
-            .ok_or_else(|| anyhow!("couldn't find {custom_id} in verification modal"))
+            .next()
+            .and_then(|row| row.components.into_iter().next())
+            .and_then(|component| component.value)
+            .ok_or_else(|| anyhow!("modal components iterator is drained"))
     }
 
     async fn create_verification_submission_message(self) -> Result<()> {
@@ -76,7 +71,7 @@ impl VerificationModalSubmit {
             .build();
 
         let approve_button = Component::Button(Button {
-            custom_id: Some("approve-verification".to_owned()),
+            custom_id: Some(ApproveVerification::CUSTOM_ID.to_owned()),
             disabled: false,
             emoji: Some(ReactionType::Unicode {
                 name: "✅".to_owned(),
@@ -148,15 +143,25 @@ impl RunInteraction for VerificationModalSubmit {
         else {
             bail!("verification modal data is not of kind modal submit")
         };
-        let components = modal.components;
+
+        let mut components = modal.components.into_iter();
+        let name_surname = to_title_case(&Self::next_component_value(&mut components)?);
+        let email = Self::next_component_value(&mut components)?;
+        let birthday = Self::next_component_value(&mut components)?;
+        let experience = Self::next_component_value(&mut components)?;
+        let organization = Self::next_component_value(&mut components)?;
 
         Ok(Self {
             submission: VerificationSubmission {
-                birthday: Self::find_component_value(&components, "birthday")?,
-                email: Self::find_component_value(&components, "email")?,
-                experience: Self::find_component_value(&components, "experience")?,
-                name_surname: Self::find_component_value(&components, "name-surname")?,
-                organization: Self::find_component_value(&components, "organization")?,
+                birthday,
+                email,
+                experience,
+                name_surname,
+                organization: if organization.is_empty() {
+                    "Yok".to_owned()
+                } else {
+                    organization
+                },
                 user_id,
             },
             ctx,
@@ -179,4 +184,30 @@ impl RunInteraction for VerificationModalSubmit {
 
         Ok(())
     }
+}
+
+fn to_title_case(string: &str) -> String {
+    let mut title = String::new();
+
+    for word in string.split_whitespace() {
+        let mut chars = word.chars();
+        let Some(first_char) = chars.next() else {
+            continue;
+        };
+
+        let first_char_uppercase = if first_char == 'i' {
+            'İ'.to_string()
+        } else {
+            first_char.to_uppercase().to_string()
+        };
+        title.push_str(&first_char_uppercase);
+
+        for char in chars {
+            title.push_str(&char.to_lowercase().to_string());
+        }
+
+        title.push(' ');
+    }
+
+    title
 }
