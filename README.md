@@ -36,11 +36,12 @@ _Doğrula_ butonuna basıldığında bot:
 
 > `.env` dosyası kullanılabilir.
 
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL`: Google Sheets için kullanılacak olan servis hesabının e-postası
 - `GUILD_ID`: Komutların oluşturulacağı sunucunun ID'si
+- `RUST_BACKTRACE`: Hata mesajında hatanın kodun hangi konumunda oluştuğunun yazması için `1`'e ayarlayın.
+- `RUST_LOG`: Bilgi, uyarı ve hata mesajlarının iletilmesi için `info`'ya ayarlayın.
 - `SHEET_ID`: Doğrulanma bilgilerinin kaydedileceği Google Sheet'in ID'si
 - `TOKEN`: Bot'un Discord Developer Portal'dan alınan token'ı
-- `TRACING_WEBHOOK_URL`: Bot'un error'larını vs. göndermek için kullanılacak webhook'un linki
+- `TRACING_WEBHOOK_URL`: Bot'un hatalarını vs. göndermek için kullanılacak webhook'un linki
 - `VERIFICATION_SUBMISSIONS_CHANNEL_ID`: Kullanıcılar doğrulanma formunu doldurduğunda, formun ve dogrulama butonunun
   olduğu mesajın atılacağı kanalın ID'si, bu kanal sadece doğrulanma yetkisi olanların görebildiği bir kanal olmalı.
 - `VERIFIED_ROLE_ID`: Kullanıcılar doğrulandığında onlara verilecek rolün ID'si
