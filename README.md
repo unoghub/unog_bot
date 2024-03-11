@@ -24,7 +24,12 @@ _Doğrula_ butonuna basıldığında bot:
 
 ### Build'leme
 
-TODO
+1. [Rust'ı kurun](https://www.rust-lang.org/learn/get-started): `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+2. `PATH`'a Rust'ın binary'lerini ekleyin: `source "$HOME/.cargo/env"`
+3. Bu repo'yu clone'layın: `git clone https://github.com/unoghub/unog_bot`
+4. Repo klasörünün içine girin: `cd unog_bot`
+5. Build'leyin: `cargo build --release`
+6. Binary `target/release/unog_bot` konumunda
 
 ### Environment Variable'lar
 
